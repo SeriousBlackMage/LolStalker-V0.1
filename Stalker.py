@@ -150,11 +150,12 @@ class Stalker:
     def setTarget(self):
         self.target = self.watcher.summoner.by_name(self.my_region, str(input("Who is your Target?: ")))
         self.targetID = self.target['id']
+        self.targetAccID = self.target['accountId']
 
     def mainloop(self):
 
         print("\nWhat do you want to know ?")
-        choice = str(input("TargetDetails[d], FreeToPlayChampions[f], SummonerMastery[c], New Target[a], TargetLeagues[l], Masteries[m]: "))
+        choice = str(input("UserDetails[d], FreeToPlayChamps[f], ChampMasteries[c], New Target[a], UserLeagues[l], UserMasteries[m], UserMatch[h], UserRunes[r]: "))
 
         if choice == 'd': self.userDetails()
         elif choice == 'a': self.setTarget()
@@ -162,6 +163,9 @@ class Stalker:
         elif choice == 'c': self.userCmasteries()
         elif choice == 'l': self.userLeagues()
         elif choice == 'm': self.userMasteries()
+        elif choice == 'h': self.userMatch()
+        elif choice == 'r': self.userRunes()
+        elif choice == 's': self.spectTest()
 
     def userDetails(self):
         print("\nName:",self.target['name'])
@@ -205,8 +209,28 @@ class Stalker:
         print(masterieInfo)
         print("\nMasteries of",self.target['name'])
         for i in masterieInfo['pages']:
-            print("Name:",i['name'])
+            print("Name:", i['name'])
 
+    def userMatch(self):
+        matchInfoRecent = self.watcher.match.matchlist_by_account_recent(self.my_region, self.targetAccID)
+        print(matchInfoRecent)
+        #nicht Fertig
+
+    def userRunes(self):
+        runesInfo = self.watcher.runes.by_summoner(self.my_region, self.targetID)
+        print(runesInfo)
+        #nicht Fertig
+
+    def spectTest(self):
+        curGameInfo = self.watcher.spectator.by_summoner(self.my_region, self.targetID)
+
+        print("GameID:",curGameInfo['gameId'])
+        print("GameMode:",curGameInfo['gameMode'])
+        print("GameType:",curGameInfo['gameType'])
+        print("\nParticipants:")
+        for i in curGameInfo['participants']:
+            print(i['summonerName'], "plays", self.chNames[i['championId']])
+            #ist kaputt
 def main():
     watcher = RiotWatcher('RGAPI-c44633af-c0c9-4215-bf65-035da09ddaa8')
     my_region = 'euw1'
