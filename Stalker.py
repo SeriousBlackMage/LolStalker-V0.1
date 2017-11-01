@@ -1,9 +1,17 @@
 from riotwatcher import RiotWatcher
+from termcolor import cprint
+from pyfiglet import figlet_format
+import os
 
 class Stalker:
 
-    def __init__(self, uWatcher, region):
-        self.watcher = uWatcher
+    def __init__(self, region):
+        if(str(input("Api Key: Already Set[a], Configure[b]:")) == 'b'):
+            self.file = open("API-Key.txt","w+")
+            self.file.write(str(input("API-Key:")))
+            self.file.close()
+        with open('API-Key.txt','r') as key:
+            self.watcher = RiotWatcher(key.read())
         self.my_region = region
         self.setTarget()
         self.chNames = {
@@ -146,17 +154,24 @@ class Stalker:
             59:  "Jarvan IV",
             81:  "Ezreal"
     }
+        self.draw()
 
     def setTarget(self):
         self.target = self.watcher.summoner.by_name(self.my_region, str(input("Who is your Target?: ")))
         self.targetID = self.target['id']
         self.targetAccID = self.target['accountId']
 
+    def draw(self):
+        clear = lambda: os.system('cls')
+        clear()
+        print("\n")
+        cprint(figlet_format('Stalker', font='starwars'),attrs=['bold'])
+
     def mainloop(self):
 
-        print("\nWhat do you want to know ?")
-        choice = str(input("UserDetails[d], FreeToPlayChamps[f], ChampMasteries[c], New Target[a], UserLeagues[l], UserMasteries[m], UserMatch[h], UserRunes[r]: "))
-
+        print("\n----------------------------------------------\nWhat do you want to know ?")
+        choice = str(input("----------------------------------------------\n\nUser Information:\n-----------------\nDetails[d]\nChampMasteries[c]\nUserMasteries[m]\nUserRunes[r]\nUserLeagues[l]\nUserMatch[h]\n----------------------------------------------\n\nMisc:\n-----\nFreeToPlayChamps[f]\nNew Target[a]\n ----------------------------------------------\n\nChoice:"))
+        self.draw()
         if choice == 'd': self.userDetails()
         elif choice == 'a': self.setTarget()
         elif choice == 'f': self.freeToPlayChamps()
@@ -201,8 +216,15 @@ class Stalker:
         #print(self.watcher.champion_mastery.by_summoner(self.my_region, userM))
 
     def userLeagues(self):
-        leagueInfo = self.watcher.league.by_summoner(self.my_region, self.targetID)
-        #nicht fertig
+        leagueInfo = self.watcher.league.positions_by_summoner(self.my_region, self.targetID)
+        print("\nLeagueInfo of:",self.target['name'])
+        for i in leagueInfo:
+            print("\nQueue Type:",i['queueType'])
+            print("Tier:",i['tier'],i['rank'])
+            print("LeagueName:",i['leagueName'])
+            print("Wins:",i['wins'],"Losses:",i['losses'])
+            print("League Points:",i['leaguePoints'])
+            print("HotStreak?",i['hotStreak'],"\n")
 
     def userMasteries(self):
         masterieInfo = self.watcher.masteries.by_summoner(self.my_region, self.targetID)
@@ -223,19 +245,31 @@ class Stalker:
 
     def spectTest(self):
         curGameInfo = self.watcher.spectator.by_summoner(self.my_region, self.targetID)
-
         print("GameID:",curGameInfo['gameId'])
         print("GameMode:",curGameInfo['gameMode'])
         print("GameType:",curGameInfo['gameType'])
         print("\nParticipants:")
         for i in curGameInfo['participants']:
-            print(i['summonerName'], "plays", self.chNames[i['championId']])
-            #ist kaputt
+            print(i['summonerName'], "plays", self.chNames[i['championId']],)
+            fLeagueInf = self.watcher.league.positions_by_summoner(self.my_region,i['summonerId'])
+            for j in fLeagueInf:
+                print("Queue Type:", j['queueType'])
+                print("Tier:", j['tier'], j['rank'])
+                print("Wins:", j['wins'], "Losses:", j['losses'],"\n")
+            print("\n")
+
+
 def main():
-    watcher = RiotWatcher('RGAPI-c44633af-c0c9-4215-bf65-035da09ddaa8')
     my_region = 'euw1'
 
-    root = Stalker(watcher,my_region)
-    while True : root.mainloop()
+    root = Stalker(my_region)
+    while True :
+        root.mainloop()
+        if(str(input("\nExit[e],Continue[Other Key]"))=='e'):
+            exit()
+        else:
+            root.draw()
 
-if __name__ == "__main__": main()
+
+main()
+input('PRess Enter to exit')
